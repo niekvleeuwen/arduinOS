@@ -35,6 +35,7 @@ void commandLine() {
 
     // split the buffer on the space char
     if (incomingChar == ' ' && cliBufferCounter > 0) {
+      cliBuffer[cliBufferCounterArguments][cliBufferCounter] = '\0'; // null terminate string
       cliBufferCounterArguments++;
       cliBufferCounter = 0;
     } else if (incomingChar == 13 || incomingChar == 10) {

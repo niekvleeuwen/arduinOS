@@ -5,12 +5,18 @@
 
 const int BUFSIZE = 32;
 
-/* CLI data  */
+/* CLI */
 void commandLine();
 // array to store the input from the CLI
 static char cliBuffer[4][BUFSIZE];
 static int cliBufferCounter = 0;
 static int cliBufferCounterArguments = 0;
+
+/* File System */
+void writeFile(char* fileName, int fileSize, char* data);
+void readFile(char* fileName);
+void eraseFile(char* fileName);
+void listFiles();
 
 // list of all commands
 void store();
@@ -53,19 +59,16 @@ void loop() {
 }
 
 void store(){
-  Serial.println("\nStore");
-  Serial.print("File: ");
-  Serial.println(cliBuffer[1]);
-  Serial.print("Size: ");
-  Serial.println(cliBuffer[2]);
-  Serial.print("Data: ");
-  Serial.println(cliBuffer[3]);
+  Serial.println("\nStoring file..");
+  writeFile(cliBuffer[1], cliBuffer[2], cliBuffer[3]);
 }
 
 void retrieve(){
   Serial.println("\nRetrieve");
   Serial.print("File: ");
   Serial.println(cliBuffer[1]);
+
+  readFile(cliBuffer[1]);
 }
 
 void erase(){
@@ -75,7 +78,8 @@ void erase(){
 }
 
 void files(){
-  Serial.println("\nFiles");
+  Serial.println("\nFiles\n=====");
+  listFiles();
 }
 
 void freespace(){
