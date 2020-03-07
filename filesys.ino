@@ -97,12 +97,20 @@ void writeFile(char* fileName, int fileSize, char* data) {
   // verify that enough space is available
   sort();
   int address = -1;
-  // check in between the blocks
-  for (int i = 0; i < noOfFiles - 1; i++) {
-    if (fileSize < (FAT[i + 1].position - (FAT[i].position + FAT[i].length))) {
-      address = FAT[i].position + FAT[i].length + 1;
+
+  // check first for space between the start of the usable memory and the first block
+  int systemMemory = (sizeof(FatEntry) * FATSIZE) + 1;
+  if ((FAT[0].position - systemMemory) >= fileSize) {
+    address = systemMemory;
+  } else {
+    // check in between the blocks
+    for (int i = 0; i < noOfFiles - 1; i++) {
+      if (fileSize < (FAT[i + 1].position - (FAT[i].position + FAT[i].length))) {
+        address = FAT[i].position + FAT[i].length + 1;
+      }
     }
   }
+
   if (address == -1) {
     // check if there are files at all
     if (noOfFiles > 0) {
@@ -115,7 +123,7 @@ void writeFile(char* fileName, int fileSize, char* data) {
       }
     } else {
       // the start address of the memory
-      address = (sizeof(FatEntry) * FATSIZE) + 1;
+      address = systemMemory;
     }
   }
 
@@ -204,8 +212,22 @@ void listFiles() {
 // print free space left on the file system
 void freeSpace() {
   sort();
+  int systemMemory = (sizeof(FatEntry) * FATSIZE) + 1; // the space the FAT table takes up
+  int totalSpaceAvailable = 0;
 
-  // calculate the difference end of file system and the start of the next file
+  // add the space between the start of the usable memory and the first file;
+  totalSpaceAvailable += (FAT[0].position - systemMemory);
+
+  // add the space between the blocks
+  for (int i = 0; i < noOfFiles - 1; i++) {
+    totalSpaceAvailable += (FAT[i + 1].position - (FAT[i].position + FAT[i].length));
+  }
+
+  // add the space between the last file and the end of the filesystem
+  totalSpaceAvailable += EEPROM.length() - (FAT[noOfFiles - 1].position + FAT[noOfFiles - 1].length);
+
+  Serial.print("Total space avaiable: ");
+  Serial.println(totalSpaceAvailable);
 }
 
 // DEBUGGING FUNCTION - clears the entire FAT table
