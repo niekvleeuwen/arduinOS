@@ -20,28 +20,20 @@ struct FileData {
 
 FatEntry FAT[FATSIZE];
 
-// write FAT entries to the EEPROM
-void writeFATEntry(char* name, int position, int length, int address) {
-  FatEntry file = {};
-  strcpy(file.name, name);
-  file.position = position;
-  file.length = length;
-  EEPROM.put(address, file);
-}
-
-// read file from the EEPROM
+// read FAT entry from the EEPROM
 struct FatEntry readFATEntry(int address) {
   FatEntry file;
   EEPROM.get(address, file);
-  Serial.print("\nRead FAT entry from EEPROM at address: ");
-  Serial.println(address);
-  Serial.println(file.name);
-  Serial.println(file.position);
-  Serial.println(file.length);
+  // uncomment these prints to see the print FAT entries when loading FAT from EEPROm
+  //  Serial.print("\nRead FAT entry from EEPROM at address: ");
+  //  Serial.println(address);
+  //  Serial.println(file.name);
+  //  Serial.println(file.position);
+  //  Serial.println(file.length);
   return file;
 }
 
-// this functions loads the FAT table in the memory
+// load the FAT table in the memory
 void loadFAT() {
   int address = 0;
   for (int i = 0; i < FATSIZE; i++) {
@@ -50,7 +42,16 @@ void loadFAT() {
   }
 }
 
-// sort FAT
+// write the FAT table from the memory to the EEPROM
+void writeFAT() {
+  int address = 0;
+  for (int i = 0; i < FATSIZE; i++) {
+    EEPROM.put(address, FAT[i]);
+    address += sizeof(FatEntry);
+  }
+}
+
+// sort FAT table
 void sort() {
   bool sorted = false;
   while (sorted == false) {
@@ -64,16 +65,11 @@ void sort() {
       }
     }
   }
-
-  // write new order to the memory
-  int address = 0;
-  for (int i = 0; i < FATSIZE; i++) {
-    EEPROM.put(address, FAT[i]);
-    address += sizeof(FatEntry);
-  }
+  // write updated FAT table to the EEPROM
+  writeFAT();
 }
 
-// finds a file in the FAT and returns it address (and -1 if not found)
+// find a file in the FAT and returns it address (and -1 if not found)
 int fileExists(char* fileName) {
   FatEntry tmp;
   for (int i = 0; i < noOfFiles; i++) {
@@ -86,13 +82,6 @@ int fileExists(char* fileName) {
 
 // write file to the filesystem
 void writeFile(char* fileName, int fileSize, char* data) {
-  Serial.print("file: ");
-  Serial.println(fileName);
-  Serial.print("Size: ");
-  Serial.println(fileSize);
-  Serial.print("Data: ");
-  Serial.println(data);
-
   // verify the fat has an entry left
   if (noOfFiles >= FATSIZE) {
     Serial.println("Error. No more space left in FAT");
@@ -106,7 +95,7 @@ void writeFile(char* fileName, int fileSize, char* data) {
   }
 
   // verify that enough space is available
-  //sort();
+  sort();
   int address = -1;
   // check in between the blocks
   for (int i = 0; i < noOfFiles - 1; i++) {
@@ -115,32 +104,45 @@ void writeFile(char* fileName, int fileSize, char* data) {
     }
   }
   if (address == -1) {
-    // check for room after the last block
-    if ((EEPROM.length() - (FAT[noOfFiles - 1].position + FAT[noOfFiles - 1].length)) < fileSize) {
-      Serial.println("Error. No more space left on disk");
-      return;
+    // check if there are files at all
+    if (noOfFiles > 0) {
+      // check for room after the last block
+      if ((EEPROM.length() - (FAT[noOfFiles - 1].position + FAT[noOfFiles - 1].length)) < fileSize) {
+        Serial.println("Error. No more space left on disk");
+        return;
+      } else {
+        address = FAT[noOfFiles - 1].position + FAT[noOfFiles - 1].length + 1;
+      }
     } else {
-      address = FAT[noOfFiles - 1].position + FAT[noOfFiles - 1].length + 1;
+      // the start address of the memory
+      address = (sizeof(FatEntry) * FATSIZE) + 1;
     }
   }
-  Serial.print("Address: ");
-  Serial.println(address);
 
+  // fill the file info in a FAT entry
   FatEntry file = {};
   strcpy(file.name, fileName);
   file.position = address;
   file.length = fileSize;
 
+  // write the FAT entry to the EEPROM
   FAT[noOfFiles] = file;
-  Serial.print("Address to put FAT: ");
   int fatAddress = sizeof(FatEntry) * noOfFiles;
-  Serial.println(fatAddress);
   EEPROM.put(fatAddress, file);
   noOfFiles++;
 
+  // write data to the EEPROM
   FileData dat = {};
   strcpy(dat.data, data);
   EEPROM.put(address, dat);
+
+  Serial.print("Filename:\t");
+  Serial.println(fileName);
+  Serial.print("Size:\t\t");
+  Serial.println(fileSize);
+  Serial.print("Data:\t\t");
+  Serial.println(data);
+  Serial.println("Storing done.");
 }
 
 // read file from the filesystem
@@ -153,29 +155,36 @@ void readFile(char* fileName) {
 
   FileData dat;
   EEPROM.get(address, dat);
+  Serial.print("\nContent: ");
   Serial.println(dat.data);
 }
 
 // erase file from the filesystem
 void eraseFile(char* fileName) {
   // verify that the file exist
-  int address = fileExists(fileName);
-  if (address == -1) {
+  if (fileExists(fileName) == -1) {
     Serial.println("Error. There is no file with this name");
     return;
   }
 
+  // remove fat entry and sort the FAT table
   int fatNumber;
   for (int i = 0; i < noOfFiles; i++) {
-    if (strcmp(FAT[i].position, address) == 0) {
+    if (strcmp(FAT[i].name, fileName) == 0) {
       fatNumber = i;
-      Serial.print(i);
       break;
     }
   }
 
-  // override old values
+  // overide the old element
+  for (int i = fatNumber; i < noOfFiles - 1; ++i) {
+    FAT[i] = FAT[i + 1]; // copy next element left
+  }
+  FatEntry file = {0, 0, 0};
+  FAT[noOfFiles - 1] = file;
 
+  noOfFiles--;
+  sort();
 }
 
 // print list of all the files with size
@@ -184,7 +193,7 @@ void listFiles() {
   Serial.println(noOfFiles);
   loadFAT();
 
-  Serial.println("\nFiles\n==================");
+  Serial.println("\nFiles\t\tLength\n======================");
   for (int i = 0; i < noOfFiles; i++) {
     Serial.print(FAT[i].name);
     Serial.print("\t\t");
@@ -197,5 +206,19 @@ void freeSpace() {
   sort();
 
   // calculate the difference end of file system and the start of the next file
+}
 
+// DEBUGGING FUNCTION - clears the entire FAT table
+void clearFAT() {
+  int address = 0;
+  char name = {0};
+  for (int i = 0; i < FATSIZE; i++) {
+    FatEntry file = {};
+    strcpy(file.name, name);
+    file.position = 0;
+    file.length = 0;
+    EEPROM.put(address, file);
+    address += sizeof(FatEntry);
+  }
+  noOfFiles = 0;
 }

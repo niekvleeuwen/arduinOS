@@ -19,7 +19,6 @@ void eraseFile(char* fileName);
 void listFiles();
 void loadFAT();
 void freeSpace();
-void writeFATEntry(char* name, int position, int length, int address);
 
 // list of all commands
 void store();
@@ -28,9 +27,9 @@ void erase();
 void files();
 void freespace();
 void run();
-void list(); 
-void suspend(); 
-void resume(); 
+void list();
+void suspend();
+void resume();
 void kill();
 
 typedef struct {
@@ -54,7 +53,7 @@ static commandType command [] = {
 static int commandTypeSize = sizeof(command) / sizeof(commandType);
 
 void setup() {
-  Serial.begin(9600); 
+  Serial.begin(9600);
   // load FAT table in memory
   loadFAT();
   // give ready signal
@@ -65,58 +64,73 @@ void loop() {
   commandLine();
 }
 
-void store(){
-  Serial.println("\nStoring file..");
-  writeFile(cliBuffer[1], atoi(cliBuffer[2]), cliBuffer[3]);
+void store() {
+  // check if all parameters are filled
+  if (cliBuffer[1][0] > 0 && cliBuffer[2][0] > 0 && cliBuffer[3][0] > 0) {
+    Serial.println("\nStoring file..");
+    writeFile(cliBuffer[1], atoi(cliBuffer[2]), cliBuffer[3]);
+  } else {
+    Serial.println("Usage: store filename length data");
+  }
 }
 
-void retrieve(){
-  Serial.print("\nContent: ");
-  readFile(cliBuffer[1]);
+void retrieve() {
+  // check if all parameters are filled
+  if (cliBuffer[1][0] > 0) {
+    readFile(cliBuffer[1]);
+  } else {
+    Serial.println("Usage: retrieve filename");
+  }
 }
 
-void erase(){
-  Serial.println("\nErase");
-  eraseFile(cliBuffer[1]);
+void erase() {
+  // check if all parameters are filled
+  if (cliBuffer[1][0] > 0) {
+    Serial.print("\nErasing ");
+    Serial.println(cliBuffer[1]);
+    eraseFile(cliBuffer[1]);
+    Serial.println("Done.");
+  } else {
+    Serial.println("Usage: retrieve filename");
+  }
 }
 
-void files(){
-  Serial.println("\nFiles\n=====");
+void files() {
   listFiles();
 }
 
-void freespace(){
+void freespace() {
   freeSpace();
-  Serial.println("\nDone sorting.");
 }
 
-void run(){
-  Serial.println("\nFAT ENTRY TMP");
-  writeFATEntry(cliBuffer[1], atoi(cliBuffer[2]), atoi(cliBuffer[3]), atoi(cliBuffer[4]));
+void run() {
+  Serial.println("\nRun");
+  Serial.print("ID: ");
+  Serial.println(cliBuffer[1]);
 }
 
-void list(){
+void list() {
   Serial.println("\nAvailable commands");
   Serial.println("==================");
-  for(int i = 0; i < commandTypeSize; i++){
-      Serial.println(command[i].name);
+  for (int i = 0; i < commandTypeSize; i++) {
+    Serial.println(command[i].name);
   }
   Serial.print("\n");
 }
 
-void suspend(){
+void suspend() {
   Serial.println("\nSuspend");
   Serial.print("ID: ");
   Serial.println(cliBuffer[1]);
 }
 
-void resume(){
+void resume() {
   Serial.println("\nResume");
   Serial.print("ID: ");
   Serial.println(cliBuffer[1]);
 }
 
-void kill(){
+void kill() {
   Serial.println("\nKill");
   Serial.print("ID: ");
   Serial.println(cliBuffer[1]);
