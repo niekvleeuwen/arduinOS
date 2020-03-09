@@ -14,10 +14,6 @@ struct FatEntry {
   int length;
 };
 
-struct FileData {
-  char data[255];
-};
-
 FatEntry FAT[FATSIZE];
 
 // read FAT entry from the EEPROM
@@ -106,7 +102,7 @@ void writeFile(char* fileName, int fileSize, char* data) {
     // check in between the blocks
     for (int i = 0; i < noOfFiles - 1; i++) {
       if (fileSize < (FAT[i + 1].position - (FAT[i].position + FAT[i].length))) {
-        address = FAT[i].position + FAT[i].length + 1;
+        address = FAT[i].position + FAT[i].length;
       }
     }
   }
@@ -119,7 +115,7 @@ void writeFile(char* fileName, int fileSize, char* data) {
         Serial.println("Error. No more space left on disk");
         return;
       } else {
-        address = FAT[noOfFiles - 1].position + FAT[noOfFiles - 1].length + 1;
+        address = FAT[noOfFiles - 1].position + FAT[noOfFiles - 1].length;
       }
     } else {
       // the start address of the memory
@@ -140,9 +136,10 @@ void writeFile(char* fileName, int fileSize, char* data) {
   noOfFiles++;
 
   // write data to the EEPROM
-  FileData dat = {};
-  strcpy(dat.data, data);
-  EEPROM.put(address, dat);
+  for(int i = 0; i < fileSize; i++){
+    EEPROM.write(address, data[i]);
+    address++;
+  }
 
   Serial.print("Filename:\t");
   Serial.println(fileName);
@@ -161,10 +158,20 @@ void readFile(char* fileName) {
     return;
   }
 
-  FileData dat;
-  EEPROM.get(address, dat);
+  // retrieve the file
+  int fatNumber = 0;
+  for(int i = 0; i < noOfFiles; i++){
+    if(FAT[i].position == address){
+       fatNumber = i;
+    }
+  }
+  
   Serial.print("\nContent: ");
-  Serial.println(dat.data);
+  for(int i = 0; i < FAT[fatNumber].length; i++){
+    Serial.print((char)EEPROM.read(address));
+    address++;
+  }
+  Serial.print("\n");
 }
 
 // erase file from the filesystem
