@@ -1,3 +1,7 @@
+/*
+  Author: Niek van Leeuwen
+  Date: 15-03-2020
+*/
 #define STACKSIZE 32
 byte stack[STACKSIZE];
 byte sp = 0;
