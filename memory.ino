@@ -11,8 +11,8 @@ const int MEMORY_TABLE_SIZE = 25;
 int noOfVars = 0;
 
 struct MemoryEntry {
-  char name;
-  char type[5];
+  byte name;
+  char type; // INT(’i’),FLOAT(’f’),CHAR(’c’),STRING(’s’)
   int address;
   int size;
   int pid;
@@ -34,7 +34,7 @@ int valueExists(byte name, int pid) {
   MemoryEntry tmp;
   for (int i = 0; i < noOfVars; i++) {
     if (MemoryTable[i].name == name) {
-      return MemoryTable[i].address;
+      return i;
     }
   }
   return -1;
@@ -96,9 +96,9 @@ void allocate(byte name, int pid) {
   // store the entry in the memory table
   MemoryEntry entry;
   entry.name = name;
-  //entry.type = IDK; // char
+  //entry.type = IDK;
   entry.address = address;
-  //entry.size = IDK;
+  entry.size = valueSize;
   entry.pid = pid;
 
   MemoryTable[noOfVars] = entry;
@@ -113,23 +113,28 @@ void allocate(byte name, int pid) {
 
 void free(byte name, int pid) {
   // check if value exists in the memory table
-  if (valueExists(name, pid) == -1) {
-    // delete value
-
+  int memoryTableAddress = valueExists(name, pid);
+  if (memoryTableAddress != -1) {
+    // move elements a spot up
+    for (int i = memoryTableAddress; i < noOfVars - 1; ++i) {
+      MemoryTable[i] = MemoryTable[i + 1]; // copy next element left
+    }
+    noOfVars--;
+  }else{
+    Serial.println("Error. Value not found.");
   }
-  noOfVars--;
 }
 
 byte retrieve(byte name, int pid) {
   // check if value exists in the memory table
-  int address = valueExists(name, pid);
-  if (address != -1) {
-    // retrieve value
-    return address;
-  } else {
-    Serial.println("Ërror. Value not found.");
+  int memoryTableAddress = valueExists(name, pid);
+  if (MemoryTable[memoryTableAddress].address == -1) {
+    Serial.println("Error. Value not found.");
     return NULL;
   }
+  
+  // return address of the given variable
+  return MemoryTable[memoryTableAddress].address;
 }
 
 void clearProcess(int pid) {
