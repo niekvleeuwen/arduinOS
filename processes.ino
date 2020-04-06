@@ -36,11 +36,11 @@ void changeProcessState(int processIndex, char state) {
     Serial.println("Error. This process has this state already.");
   } else {
     ProcessTable[processIndex].state = state;
-    Serial.println("Error. The state of this process is succesfully changed.");
+    Serial.println("Done. The state of this process is succesfully changed.");
   }
 }
 
-void startProcess(char name) {
+void startProcess(char* fileName) {
   // check if the process table has enough space
   if (noOfProcesses >= PROCESS_TABLE_SIZE) {
     Serial.println("Error. No more space in process table.");
@@ -48,21 +48,21 @@ void startProcess(char name) {
   }
 
   // check if the file to execute exists
-  int pc = fileExists(name);
+  int pc = fileExists(fileName);
   if (pc == -1) {
     Serial.println("Error. File does not exists.");
     return;
   }
 
   Process p;
-  strcpy(p.name, name);
-  p.pid = noOfFiles;
+  strcpy(p.name, fileName);
+  p.pid = noOfProcesses;
   p.state = 'r';
   p.pc = pc;
   p.sp = 0;
 
-  ProcessTable[noOfFiles] = p;
-  noOfFiles++;
+  ProcessTable[noOfProcesses] = p;
+  noOfProcesses++;
 
   Serial.print("Program started with pid: ");
   Serial.println(p.pid);
@@ -105,14 +105,29 @@ void listProcesses() {
   Serial.print("Number of processes: ");
   Serial.println(noOfProcesses);
 
-  Serial.println("\nProcess\t\tPID\tState\n======================");
+  Serial.println("\nProcess\t\tPID\tState\n=============================");
   for (int i = 0; i < noOfProcesses; i++) {
     if (ProcessTable[i].state != 0) {
       Serial.print(ProcessTable[i].name);
       Serial.print("\t\t");
       Serial.print(ProcessTable[i].pid);
       Serial.print("\t");
-      Serial.print(ProcessTable[i].state);
+      Serial.println(ProcessTable[i].state);
     }
   }
+}
+
+
+// loop trough the process table and execute one instruction
+void runProcesses(){
+  for (int i = 0; i < noOfProcesses; i++) {
+    if (ProcessTable[i].state == 'R') {
+      execute(i);
+    }
+  }
+}
+
+// execute one line of a process
+void execute(int i){
+  
 }
