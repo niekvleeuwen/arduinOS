@@ -48,7 +48,7 @@ void commandLine() {
           Serial.print("Command '");
           Serial.print(cliBuffer[0]);
           Serial.println("' is not a known command.");
-          list();
+          help();
         }
 
         clearBuffers();
