@@ -2,17 +2,13 @@
   Author: Niek van Leeuwen
   Date: 15-03-2020
 */
-#define STACKSIZE 32
-byte stack[STACKSIZE];
-byte sp = 0;
-
 const int MEMORY_SIZE = 256;
-const int MEMORY_TABLE_SIZE = 25;
+const int MEMORY_TABLE_SIZE = 10;
 int noOfVars = 0;
 
 struct MemoryEntry {
   byte name;
-  char type; // INT(’i’),FLOAT(’f’),CHAR(’c’),STRING(’s’)
+  char type; // INT(’I’),FLOAT(’F’),CHAR(’C’),STRING(’S’)
   int address;
   int size;
   int pid;
@@ -20,14 +16,6 @@ struct MemoryEntry {
 
 MemoryEntry MemoryTable[MEMORY_TABLE_SIZE];
 byte Memory[MEMORY_SIZE];
-
-void pushByte(byte b) {
-  stack[sp++] = b;
-}
-
-byte popByte() {
-  return stack[sp--];
-}
 
 // find a value in the Memory Table and return it address (and -1 if not found)
 int valueExists(byte name, int pid) {
@@ -56,6 +44,7 @@ void sortMemory() {
   }
 }
 
+// allocate a value from the stack to the memory
 void allocate(byte name, int pid) {
   // check first for space in the memory table
   if (noOfVars >= MEMORY_TABLE_SIZE) {
@@ -69,10 +58,22 @@ void allocate(byte name, int pid) {
     free(name, pid);
   }
 
-  // check how many bytes we need
-  // pop stuff
+  // check how many bytes we need to pop
+  char type = (char)popByte(pid);
   int valueSize = 0;
-  int value = 0;
+  if (type = 'I') {
+    valueSize = 2;
+  } else if (type = 'F') {
+    valueSize = 4;
+  } else if(type = 'C'){
+    valueSize = 1;
+  }else if(type = 'S'){
+    valueSize = (int)popByte(pid); // pop the size from the stack
+  }
+  byte popped[valueSize];
+  for (int i = 0; i < valueSize; i++) {
+    popped[i] = popByte(pid);
+  }
 
   // search for a spot in the memory
   sortMemory();
@@ -96,21 +97,22 @@ void allocate(byte name, int pid) {
   // store the entry in the memory table
   MemoryEntry entry;
   entry.name = name;
-  //entry.type = IDK;
+  entry.type = type;
   entry.address = address;
   entry.size = valueSize;
   entry.pid = pid;
-
   MemoryTable[noOfVars] = entry;
 
   // store the value in the memory
-  for (int i = 0; i < valueSize; i++) {
-    Memory[address] = value;
+  int j = 0;
+  for (int i = address; i < (address + valueSize); i++) {
+    Memory[i] = popped[j];
+    j++;
   }
-
   noOfVars++;
 }
 
+// free a variable
 void free(byte name, int pid) {
   // check if value exists in the memory table
   int memoryTableAddress = valueExists(name, pid);
@@ -120,11 +122,12 @@ void free(byte name, int pid) {
       MemoryTable[i] = MemoryTable[i + 1]; // copy next element left
     }
     noOfVars--;
-  }else{
+  } else {
     Serial.println("Error. Value not found.");
   }
 }
 
+// retrieve a variable from the memory
 byte retrieve(byte name, int pid) {
   // check if value exists in the memory table
   int memoryTableAddress = valueExists(name, pid);
@@ -132,11 +135,12 @@ byte retrieve(byte name, int pid) {
     Serial.println("Error. Value not found.");
     return NULL;
   }
-  
+
   // return address of the given variable
   return MemoryTable[memoryTableAddress].address;
 }
 
+// remove all the variables for a process
 void clearProcess(int pid) {
   // remove all the data with the given pid
   MemoryEntry tmp = {};

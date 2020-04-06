@@ -31,6 +31,7 @@ void list();
 void suspend();
 void resume();
 void kill();
+void help();
 
 typedef struct {
   char name[BUFSIZE];
@@ -48,6 +49,7 @@ static commandType command [] = {
   {"suspend" , &suspend },
   {"resume" , &resume },
   {"kill" , &kill },
+  {"help" , &help },
 };
 
 static int commandTypeSize = sizeof(command) / sizeof(commandType);
@@ -104,12 +106,19 @@ void freespace() {
 }
 
 void run() {
-  Serial.println("\nRun");
-  Serial.print("ID: ");
-  Serial.println(cliBuffer[1]);
+  // check if all parameters are filled
+  if (cliBuffer[1][0] > 0) {
+    startProcess(cliBuffer[1]);
+  } else {
+    Serial.println("Usage: run filename");
+  }
 }
 
 void list() {
+  listProcesses();
+}
+
+void help(){
   Serial.println("\nAvailable commands");
   Serial.println("==================");
   for (int i = 0; i < commandTypeSize; i++) {
@@ -119,19 +128,28 @@ void list() {
 }
 
 void suspend() {
-  Serial.println("\nSuspend");
-  Serial.print("ID: ");
-  Serial.println(cliBuffer[1]);
+  // check if all parameters are filled
+  if (cliBuffer[1][0] > 0) {
+    pauseProcess(atoi(cliBuffer[1]));
+  } else {
+    Serial.println("Usage: suspend pid");
+  }
 }
 
 void resume() {
-  Serial.println("\nResume");
-  Serial.print("ID: ");
-  Serial.println(cliBuffer[1]);
+  // check if all parameters are filled
+  if (cliBuffer[1][0] > 0) {
+    resumeProcess(atoi(cliBuffer[1]));
+  } else {
+    Serial.println("Usage: resume pid");
+  }
 }
 
 void kill() {
-  Serial.println("\nKill");
-  Serial.print("ID: ");
-  Serial.println(cliBuffer[1]);
+ // check if all parameters are filled
+  if (cliBuffer[1][0] > 0) {
+    killProcess(atoi(cliBuffer[1]));
+  } else {
+    Serial.println("Usage: kill pid");
+  }
 }
