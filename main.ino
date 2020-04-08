@@ -8,7 +8,7 @@ const int BUFSIZE = 12;
 /* CLI */
 void commandLine();
 // array to store the input from the CLI
-static char cliBuffer[5][BUFSIZE];
+static char cliBuffer[4][BUFSIZE];
 static int cliBufferCounter = 0;
 static int cliBufferCounterArguments = 0;
 
@@ -64,6 +64,7 @@ void setup() {
 
 void loop() {
   commandLine();
+  runProcesses();
 }
 
 void store() {
@@ -118,7 +119,7 @@ void list() {
   listProcesses();
 }
 
-void help(){
+void help() {
   Serial.println("\nAvailable commands");
   Serial.println("==================");
   for (int i = 0; i < commandTypeSize; i++) {
@@ -146,7 +147,7 @@ void resume() {
 }
 
 void kill() {
- // check if all parameters are filled
+  // check if all parameters are filled
   if (cliBuffer[1][0] > 0) {
     killProcess(atoi(cliBuffer[1]));
   } else {
