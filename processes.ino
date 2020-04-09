@@ -48,8 +48,8 @@ void startProcess(char* fileName) {
   }
 
   // check if the file to execute exists
-  int pc = fileExists(fileName);
-  if (pc == -1) {
+  int address = fileExists(fileName);
+  if (address == -1) {
     Serial.println("Error. File does not exists.");
     return;
   }
@@ -58,8 +58,9 @@ void startProcess(char* fileName) {
   strcpy(p.name, fileName);
   p.pid = noOfProcesses;
   p.state = 'r';
-  p.pc = pc;
+  p.pc = 0;
   p.sp = 0;
+  p.address = address;
 
   ProcessTable[noOfProcesses] = p;
   noOfProcesses++;
@@ -78,6 +79,7 @@ void killProcess(int pid) {
   clearProcess(pid);
   // change the state to TERMINATED
   changeProcessState(processIndex, 0);
+  noOfProcesses--;
 }
 
 void pauseProcess(int pid) {
@@ -117,17 +119,95 @@ void listProcesses() {
   }
 }
 
-
 // loop trough the process table and execute one instruction
-void runProcesses(){
+void runProcesses() {
   for (int i = 0; i < noOfProcesses; i++) {
-    if (ProcessTable[i].state == 'R') {
+    if (ProcessTable[i].state == 'r') {
+      Serial.print("\nExecuting: ");
+      Serial.println(ProcessTable[i].pid);
       execute(i);
     }
   }
 }
 
 // execute one line of a process
-void execute(int i){
-  
+void execute(int i) {
+  int address = ProcessTable[i].address;
+
+  // for every read byte up the PC one
+  Serial.print("Current PC: ");
+  Serial.println(ProcessTable[i].pc);
+  byte currentCommand = EEPROM.read(address + ProcessTable[i].pc);
+  ProcessTable[i].pc++;
+  Serial.print("currentCommand: ");
+  Serial.println(currentCommand);
+  switch (currentCommand) {
+    case PRINT:
+      Serial.println("PRINT");
+
+      break;
+    case STOP:
+      Serial.print("\nProcess with pid: ");
+      Serial.print(ProcessTable[i].pid);
+      Serial.println(" is finished.");
+      killProcess(ProcessTable[i].pid);
+      break;
+    case STRING:
+      Serial.print("STRING: ");
+      char string[12];
+      int pointer = 0;
+      do {
+        string[pointer] = (char)EEPROM.read(address + ProcessTable[i].pc++);
+        pointer++;
+      } while (string[pointer - 1] != 0);
+      Serial.println(string);
+      pushString(ProcessTable[i].pid, string);
+      break;
+  }
+}
+
+// this is a function to put a Program in the memory
+void putProgramInMemory() {
+  // program hello
+  byte prog1[] = {STRING, 'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '\n', 0,
+                  PRINT,
+                  STOP
+                 };
+  // fill the file info in a FAT entry
+  FatEntry file = {};
+  char* fileName = "prog1";
+
+  int address = (sizeof(FatEntry) * FATSIZE) + 1;
+  strcpy(file.name, fileName);
+  file.position = address;
+  int fileSize = sizeof(prog1);
+  file.length = fileSize;
+
+  // write the FAT entry to the EEPROM
+  FAT[0] = file;
+  int fatAddress = sizeof(FatEntry) * 0;
+  EEPROM.put(fatAddress, file);
+  noOfFiles++;
+
+  // write data to the EEPROM
+  for (int i = 0; i < fileSize; i++) {
+    Serial.print("\nWriting at address: ");
+    Serial.println(address);
+    Serial.print("Byte: ");
+    Serial.println(prog1[i]);
+    EEPROM.write(address, prog1[i]);
+    address++;
+  }
+
+  Serial.print("Filename:\t");
+  Serial.println(fileName);
+  Serial.print("Size:\t\t");
+  Serial.println(fileSize);
+  Serial.println("Storing done.");
+
+  Serial.println("Readback: ");
+  // write data to the EEPROM
+  for (int i = 161; i < 177; i++) {
+    Serial.println(EEPROM.read(i));
+  }
 }

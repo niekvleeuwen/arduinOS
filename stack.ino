@@ -1,5 +1,5 @@
 #define STACKSIZE 32
-byte stack[1][STACKSIZE];
+byte stack[PROCESS_TABLE_SIZE][STACKSIZE];
 
 void pushByte(int processIndex, byte b) {
   stack[processIndex][ProcessTable[processIndex].sp++] = b;
@@ -15,9 +15,11 @@ void pushFloat(int processIndex, float f) {
   byte b[4];
   float *pf = (float *)b;
   *pf = f;
-  for(int i = 4; i > 0; i--){
+  for (int i = 4; i > 0; i--) {
     pushByte(processIndex, b[i]);
   }
+  // push the type
+  pushByte(processIndex, FLOAT);
 }
 
 // this function pops a float from the stack
@@ -34,6 +36,8 @@ float* popFloat(int processIndex) {
 void pushInt(int processIndex, int i) {
   pushByte(processIndex, highByte(i));
   pushByte(processIndex, lowByte(i));
+  // push the type
+  pushByte(processIndex, INT);
 }
 
 // this function pops a int from the stack
@@ -56,16 +60,17 @@ void pushString(int processIndex, char* s) {
   // push the size of the string
   pushByte(processIndex, (byte)i + 1);
   // push the type
-  //pushByte(processIndex, (byte)'S');
+  pushByte(processIndex, STRING);
 }
 
 // this function pops a string from the stack
 char* popString(int processIndex) {
   // first pop the size
   int stringSize = (int)popByte(processIndex);
-  char s[stringSize];
+  char s[12];
   for (int i = stringSize; i > 0; i--) {
     s[i] = (char)popByte(processIndex);
   }
+  Serial.println(s);
   return s;
 }

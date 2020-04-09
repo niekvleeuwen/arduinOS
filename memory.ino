@@ -59,17 +59,15 @@ void allocate(byte name, int pid) {
   }
 
   // check how many bytes we need to pop
-  char type = (char)popByte(pid);
+  byte type = popByte(pid);
   int valueSize = 0;
-  if (type = 'I') {
-    valueSize = 2;
-  } else if (type = 'F') {
-    valueSize = 4;
-  } else if(type = 'C'){
-    valueSize = 1;
-  }else if(type = 'S'){
+  if(type == STRING){
     valueSize = (int)popByte(pid); // pop the size from the stack
+  }else{
+    valueSize = (int)type;
   }
+
+  // pop the amount of bytes needed
   byte popped[valueSize];
   for (int i = 0; i < valueSize; i++) {
     popped[i] = popByte(pid);
