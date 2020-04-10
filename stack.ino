@@ -1,13 +1,12 @@
 #define STACKSIZE 32
-byte stack[PROCESS_TABLE_SIZE][STACKSIZE];
+byte stack[1][STACKSIZE];
 
 void pushByte(int processIndex, byte b) {
   stack[processIndex][ProcessTable[processIndex].sp++] = b;
 }
 
 byte popByte(int processIndex) {
-  ProcessTable[processIndex].sp--;
-  return stack[processIndex][ProcessTable[processIndex].sp];
+  return stack[processIndex][--ProcessTable[processIndex].sp];
 }
 
 // this function pushes a float to the stack
@@ -15,7 +14,7 @@ void pushFloat(int processIndex, float f) {
   byte b[4];
   float *pf = (float *)b;
   *pf = f;
-  for (int i = 4; i > 0; i--) {
+  for (int i = 3; i >= 0; i--) {
     pushByte(processIndex, b[i]);
   }
   // push the type
@@ -23,13 +22,15 @@ void pushFloat(int processIndex, float f) {
 }
 
 // this function pops a float from the stack
-float* popFloat(int processIndex) {
+float popFloat(int processIndex) {
   byte b[4];
   for (int i = 0; i < 4; i++) {
     b[i] = popByte(processIndex);
   }
   float *pf = (float *)b;
-  return pf;
+  float data = *pf;
+  delete pf;
+  return data;
 }
 
 // this function pushes an int to the stack
@@ -67,10 +68,11 @@ void pushString(int processIndex, char* s) {
 char* popString(int processIndex) {
   // first pop the size
   int stringSize = (int)popByte(processIndex);
-  char s[12];
-  for (int i = stringSize; i > 0; i--) {
+  char s[stringSize];
+  for (int i = stringSize-1; i >= 0; i--) {
     s[i] = (char)popByte(processIndex);
   }
-  Serial.println(s);
-  return s;
+  char * buf = (char *) malloc (stringSize);
+  strcpy (buf, s);
+  return buf;
 }
