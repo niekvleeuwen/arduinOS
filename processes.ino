@@ -143,7 +143,7 @@ void execute(int i) {
   Serial.println(currentCommand);
   switch (currentCommand) {
     case PRINT:
-      Serial.println("PRINT");
+      printStack(ProcessTable[i].pid, address);
       break;
     case STOP:
       Serial.print("\nProcess with pid: ");
@@ -162,39 +162,84 @@ void execute(int i) {
       Serial.println(string);
       pushString(ProcessTable[i].pid, string);
       break;
+    case CHAR:
+      Serial.println("CHAR");
+      break;
+    case INT:
+      Serial.println("INT");
+      int first = EEPROM.read(address + ProcessTable[i].pc++);
+      int second = EEPROM.read(address + ProcessTable[i].pc++);
+      int result = (first * 256) + second;
+      pushInt(ProcessTable[i].pid, result);
+      break;
+    case FLOAT:
+      Serial.println("FLOAT");
+      break;
+    case SET:
+      char vName = (char)EEPROM.read(address + ProcessTable[i].pc++);
+      break;
+    case GET:
+      break;
   }
 }
 
-// this is a function to put a Program in the memory
+void printStack(int pid, int address) {
+  Serial.println("PRINT");
+  // check how many bytes we need to pop
+  byte type = popByte(pid);
+  switch (type) {
+    case STRING:
+      char* r = popString(pid);
+      Serial.println(r);
+      free(r);
+      break;
+    case INT:
+      break;
+    case CHAR:
+      break;
+    case FLOAT:
+      break;
+  }
+}
+
+// this is a function to put a program in the memory
 void putProgramInMemory() {
   // program hello
-  byte prog1[] = {STRING, 'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '\n', 0,
-                  PRINT,
-                  STOP
+  // program blink
+  byte prog6[] = {INT, 0, LED_BUILTIN, SET, 'p',
+                  GET, 'p', INT, 0, OUTPUT, PINMODE,
+                  LOOP,
+                  GET, 'p', INT, 0, HIGH, DIGITALWRITE,
+                  MILLIS, INT, 1, 244, PLUS, // 500
+                  DELAYUNTIL,
+                  GET, 'p', INT, 0, LOW, DIGITALWRITE,
+                  MILLIS, INT, 1, 244, PLUS, // 500
+                  DELAYUNTIL,
+                  ENDLOOP
                  };
   // fill the file info in a FAT entry
   FatEntry file = {};
-  char* fileName = "prog1";
+  char* fileName = "blink";
 
-  int address = (sizeof(FatEntry) * FATSIZE) + 1;
+  int address = (sizeof(FatEntry) * FATSIZE) + 1 + 16;
   strcpy(file.name, fileName);
   file.position = address;
-  int fileSize = sizeof(prog1);
+  int fileSize = sizeof(prog6);
   file.length = fileSize;
 
   // write the FAT entry to the EEPROM
-  FAT[0] = file;
-  int fatAddress = sizeof(FatEntry) * 0;
+  FAT[1] = file;
+  int fatAddress = sizeof(FatEntry) * 1;
   EEPROM.put(fatAddress, file);
-  noOfFiles = 1;
+  noOfFiles = 2;
 
   // write data to the EEPROM
   for (int i = 0; i < fileSize; i++) {
     Serial.print("\nWriting at address: ");
     Serial.println(address);
     Serial.print("Byte: ");
-    Serial.println(prog1[i]);
-    EEPROM.write(address, prog1[i]);
+    Serial.println(prog6[i]);
+    EEPROM.write(address, prog6[i]);
     address++;
   }
 
