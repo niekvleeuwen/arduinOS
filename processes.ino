@@ -123,7 +123,7 @@ void listProcesses() {
 void runProcesses() {
   for (int i = 0; i < noOfProcesses; i++) {
     if (ProcessTable[i].state == 'r') {
-      Serial.print("\nExecuting: ");
+      Serial.print("Executing process: ");
       Serial.println(ProcessTable[i].pid);
       execute(i);
     }
@@ -144,7 +144,6 @@ void execute(int i) {
   switch (currentCommand) {
     case PRINT:
       Serial.println("PRINT");
-
       break;
     case STOP:
       Serial.print("\nProcess with pid: ");
@@ -187,7 +186,7 @@ void putProgramInMemory() {
   FAT[0] = file;
   int fatAddress = sizeof(FatEntry) * 0;
   EEPROM.put(fatAddress, file);
-  noOfFiles++;
+  noOfFiles = 1;
 
   // write data to the EEPROM
   for (int i = 0; i < fileSize; i++) {
