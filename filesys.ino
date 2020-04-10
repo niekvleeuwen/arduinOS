@@ -77,7 +77,7 @@ int fileExists(char* fileName) {
 }
 
 // write file to the filesystem
-void writeFile(char* fileName, int fileSize, char* data) {
+void writeFile(char* fileName, int fileSize) {
   // verify the fat has an entry left
   if (noOfFiles >= FATSIZE) {
     Serial.println("Error. No more space left in FAT");
@@ -136,8 +136,16 @@ void writeFile(char* fileName, int fileSize, char* data) {
   noOfFiles++;
 
   // write data to the EEPROM
-  for(int i = 0; i < fileSize; i++){
-    EEPROM.write(address, data[i]);
+  fileSize++;
+  byte buffer[fileSize];
+  while(Serial.available() == 0){}
+  Serial.readBytes(buffer, fileSize);
+  delay(100);
+  // clear the serial buffer
+  while(Serial.available()){ Serial.read();}
+  
+  for(int i = 1; i < fileSize; i++){
+    EEPROM.write(address, buffer[i]);
     address++;
   }
 
@@ -145,8 +153,6 @@ void writeFile(char* fileName, int fileSize, char* data) {
   Serial.println(fileName);
   Serial.print("Size:\t\t");
   Serial.println(fileSize);
-  Serial.print("Data:\t\t");
-  Serial.println(data);
   Serial.println("Storing done.");
 }
 
@@ -162,10 +168,10 @@ void readFile(char* fileName) {
   int fatNumber = 0;
   for(int i = 0; i < noOfFiles; i++){
     if(FAT[i].position == address){
-       fatNumber = i;
+      fatNumber = i;
     }
   }
-  
+
   Serial.print("\nContent: ");
   for(int i = 0; i < FAT[fatNumber].length; i++){
     Serial.print((char)EEPROM.read(address));

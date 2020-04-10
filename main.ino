@@ -56,6 +56,7 @@ static int commandTypeSize = sizeof(command) / sizeof(commandType);
 
 void setup() {
   Serial.begin(9600);
+  Serial.setTimeout(-1);
   // load FAT table in memory
   loadFAT();
   // give ready signal
@@ -69,9 +70,9 @@ void loop() {
 
 void store() {
   // check if all parameters are filled
-  if (cliBuffer[1][0] > 0 && cliBuffer[2][0] > 0 && cliBuffer[3][0] > 0) {
+  if (cliBuffer[1][0] > 0 && cliBuffer[2][0] > 0) {
     Serial.println("\nStoring file..");
-    writeFile(cliBuffer[1], atoi(cliBuffer[2]), cliBuffer[3]);
+    writeFile(cliBuffer[1], atoi(cliBuffer[2]));
   } else {
     Serial.println("Usage: store filename length data");
   }
