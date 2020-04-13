@@ -81,7 +81,7 @@ char* popString(int processIndex) {
   for (int i = stringSize-1; i >= 0; i--) {
     s[i] = (char)popByte(processIndex);
   }
-  Serial.println(s);
+  // store the string in the memory
   char * buf = (char *) malloc (stringSize);
   strcpy (buf, s);
   return buf;

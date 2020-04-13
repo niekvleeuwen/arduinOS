@@ -33,7 +33,7 @@ int pidExists(int pid) {
 void changeProcessState(int processIndex, char state) {
   char currentState = ProcessTable[processIndex].state;
   if (currentState == state) {
-    Serial.println("Error. This process has this state already.");
+    Serial.println("Error.");
   } else {
     ProcessTable[processIndex].state = state;
     Serial.println("Done. The state of this process is succesfully changed.");
@@ -123,7 +123,7 @@ void listProcesses() {
 void runProcesses() {
   for (int i = 0; i < noOfProcesses; i++) {
     if (ProcessTable[i].state == 'r') {
-      Serial.print("Executing process: ");
+      Serial.print("Process: ");
       Serial.println(ProcessTable[i].pid);
       execute(i);
     }
@@ -135,11 +135,11 @@ void execute(int i) {
   int address = ProcessTable[i].address;
 
   // for every read byte up the PC one
-  Serial.print("Current PC: ");
+  Serial.print("PC: ");
   Serial.println(ProcessTable[i].pc);
   byte currentCommand = EEPROM.read(address + ProcessTable[i].pc);
   ProcessTable[i].pc++;
-  Serial.print("currentCommand: ");
+  Serial.print("CMD: ");
   Serial.println(currentCommand);
   switch (currentCommand) {
     case PRINT:
@@ -159,7 +159,6 @@ void execute(int i) {
         string[pointer] = (char)EEPROM.read(address + ProcessTable[i].pc++);
         pointer++;
       } while (string[pointer - 1] != 0);
-      Serial.println(string);
       pushString(ProcessTable[i].pid, string);
       break;
     case CHAR:
