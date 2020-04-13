@@ -9,6 +9,15 @@ byte popByte(int processIndex) {
   return stack[processIndex][--ProcessTable[processIndex].sp];
 }
 
+void printStack(int processIndex){
+ Serial.println("\nStack:\n==========");
+ for(int i = 0; i < ProcessTable[processIndex].sp; i++){
+   Serial.print(i);
+   Serial.print(" - ");
+   Serial.println(stack[processIndex][i]);
+ }
+}
+
 // this function pushes a float to the stack
 void pushFloat(int processIndex, float f) {
   byte b[4];
@@ -72,7 +81,20 @@ char* popString(int processIndex) {
   for (int i = stringSize-1; i >= 0; i--) {
     s[i] = (char)popByte(processIndex);
   }
+  Serial.println(s);
   char * buf = (char *) malloc (stringSize);
   strcpy (buf, s);
   return buf;
+}
+
+// this function pushes a char to the stack
+void pushChar(int processIndex, char s) {
+  pushByte(processIndex, s);
+  // push the type
+  pushByte(processIndex, CHAR);
+}
+
+// this function pops a char from the stack
+char popChar(int processIndex) {
+  return (char)popByte(processIndex);
 }
