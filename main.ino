@@ -58,7 +58,7 @@ void setup() {
   // load FAT table in memory
   loadFAT();
   // give ready signal
-  Serial.println(F("\nArduinOS 0.1 ready.\n=================="));
+  Serial.println("\nArduinOS 0.1 ready.\n==================");
 }
 
 void loop() {
@@ -69,10 +69,9 @@ void loop() {
 void store() {
   // check if all parameters are filled
   if (cliBuffer[1][0] > 0 && cliBuffer[2][0] > 0) {
-    Serial.println(F("\nStoring file.."));
     writeFile(cliBuffer[1], atoi(cliBuffer[2]));
-  } else {
-    Serial.println(F("Usage: store filename length data"));
+  }else{
+    printError();
   }
 }
 
@@ -80,20 +79,17 @@ void retrieve() {
   // check if all parameters are filled
   if (cliBuffer[1][0] > 0) {
     readFile(cliBuffer[1]);
-  } else {
-    Serial.println(F("Usage: retrieve filename"));
+  }else{
+    printError();
   }
 }
 
 void erase() {
   // check if all parameters are filled
   if (cliBuffer[1][0] > 0) {
-    Serial.print(F("\nErasing "));
-    Serial.println(cliBuffer[1]);
     eraseFile(cliBuffer[1]);
-    Serial.println(F("Done."));
-  } else {
-    Serial.println(F("Usage: retrieve filename"));
+  }else{
+    printError();
   }
 }
 
@@ -110,7 +106,7 @@ void run() {
   if (cliBuffer[1][0] > 0) {
     startProcess(cliBuffer[1]);
   } else {
-    Serial.println(F("Usage: run filename"));
+    printError();
   }
 }
 
@@ -123,7 +119,7 @@ void suspend() {
   if (cliBuffer[1][0] > 0) {
     pauseProcess(atoi(cliBuffer[1]));
   } else {
-    Serial.println(F("Usage: suspend pid"));
+    printError();
   }
 }
 
@@ -132,7 +128,7 @@ void resume() {
   if (cliBuffer[1][0] > 0) {
     resumeProcess(atoi(cliBuffer[1]));
   } else {
-    Serial.println(F("Usage: resume pid"));
+    printError();
   }
 }
 
@@ -141,6 +137,10 @@ void kill() {
   if (cliBuffer[1][0] > 0) {
     killProcess(atoi(cliBuffer[1]));
   } else {
-    Serial.println(F("Usage: kill pid"));
+    printError();
   }
+}
+
+void printError(){
+  Serial.println("Wrong usage.");
 }

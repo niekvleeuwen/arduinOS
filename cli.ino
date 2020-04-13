@@ -45,9 +45,9 @@ void commandLine() {
 
         // show list in case of no match
         if (matchFound == false) {
-          Serial.print(F("Command '"));
+          Serial.print("Command '");
           Serial.print(cliBuffer[0]);
-          Serial.println(F("' is not a known command."));
+          Serial.println("' is not a known command.");
         }
 
         clearBuffers();
