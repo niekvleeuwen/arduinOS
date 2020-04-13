@@ -8,7 +8,7 @@ int noOfVars = 0;
 
 struct MemoryEntry {
   byte name;
-  char type; // INT(’I’),FLOAT(’F’),CHAR(’C’),STRING(’S’)
+  char type;
   int address;
   int size;
   int pid;
@@ -121,21 +121,26 @@ void free(byte name, int pid) {
     }
     noOfVars--;
   } else {
-    Serial.println("Error. Value not found.");
+    Serial.println("Error.");
   }
 }
 
 // retrieve a variable from the memory
-byte retrieve(byte name, int pid) {
+void retrieve(byte name, int pid) {
   // check if value exists in the memory table
   int memoryTableAddress = valueExists(name, pid);
   if (MemoryTable[memoryTableAddress].address == -1) {
-    Serial.println("Error. Value not found.");
+    Serial.println("Error.");
     return NULL;
   }
 
-  // return address of the given variable
-  return MemoryTable[memoryTableAddress].address;
+  // push the variable to the stack
+  for (int i = MemoryTable[memoryTableAddress].address; i < (MemoryTable[memoryTableAddress].address + MemoryTable[memoryTableAddress].size); i++) {
+    pushByte(pid, Memory[i]);
+  }
+
+  // push the type to the stack
+  byte type = MemoryTable[memoryTableAddress].type;
 }
 
 // remove all the variables for a process
