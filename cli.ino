@@ -45,16 +45,15 @@ void commandLine() {
 
         // show list in case of no match
         if (matchFound == false) {
-          Serial.print("Command '");
+          Serial.print(F("Command '"));
           Serial.print(cliBuffer[0]);
-          Serial.println("' is not a known command.");
-          help();
+          Serial.println(F("' is not a known command."));
         }
 
         clearBuffers();
 
         // give ready signal
-        Serial.println("\nArduinOS 0.1 ready.\n==================");
+        Serial.println(F("\nArduinOS 0.1 ready.\n=================="));
       }
     } else {
       cliBuffer[cliBufferCounterArguments][cliBufferCounter] = incomingChar; // store the incoming char
