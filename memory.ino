@@ -2,8 +2,8 @@
   Author: Niek van Leeuwen
   Date: 15-03-2020
 */
-const int MEMORY_SIZE = 128;
-const int MEMORY_TABLE_SIZE = 10;
+const int MEMORY_SIZE = 256;
+const int MEMORY_TABLE_SIZE = 5;
 int noOfVars = 0;
 
 struct MemoryEntry {
@@ -141,6 +141,7 @@ void retrieve(byte name, int pid) {
 
   // push the type to the stack
   byte type = MemoryTable[memoryTableAddress].type;
+  pushByte(pid, type);
 }
 
 // remove all the variables for a process

@@ -12,7 +12,7 @@ struct Process {
   int address;
 };
 
-const int PROCESS_TABLE_SIZE = 10;
+const int PROCESS_TABLE_SIZE = 5;
 Process ProcessTable[PROCESS_TABLE_SIZE];
 int noOfProcesses = 0;
 
@@ -36,7 +36,7 @@ void changeProcessState(int processIndex, char state) {
     Serial.println("Error.");
   } else {
     ProcessTable[processIndex].state = state;
-    Serial.println("Done. The state of this process is succesfully changed.");
+    Serial.println("Done. The state is changed.");
   }
 }
 
@@ -72,7 +72,7 @@ void startProcess(char* fileName) {
 void killProcess(int pid) {
   int processIndex = pidExists(pid);
   if (processIndex == -1) {
-    Serial.println("Error. No program found with this PID.");
+    Serial.println("Error. Invalid PID.");
     return;
   }
   // delete all variables from memory
@@ -85,7 +85,7 @@ void killProcess(int pid) {
 void pauseProcess(int pid) {
   int processIndex = pidExists(pid);
   if (processIndex == -1) {
-    Serial.println("Error. No program found with this PID.");
+    Serial.println("Error. Invalid PID.");
     return;
   }
   // change the state to PAUSED
@@ -96,7 +96,7 @@ void pauseProcess(int pid) {
 void resumeProcess(int pid) {
   int processIndex = pidExists(pid);
   if (processIndex == -1) {
-    Serial.println("Error. No program found with this PID.");
+    Serial.println("Error. Invalid PID.");
     return;
   }
   // change the state to RUNNING
@@ -139,9 +139,6 @@ void execute(int i) {
   Serial.println(ProcessTable[i].pc);
   byte currentCommand = EEPROM.read(address + ProcessTable[i].pc);
   ProcessTable[i].pc++;
-  if (ProcessTable[i].pc > 37) {
-    currentCommand = STOP;
-  }
   Serial.print("CMD: ");
   Serial.println(currentCommand);
   switch (currentCommand) {
@@ -219,8 +216,6 @@ void printStack(int pid, int address) {
 
 // this is a function to put a program in the memory
 void putProgramInMemory() {
-  // program hello
-  // program blink
   byte prog6[] = {INT, 0, LED_BUILTIN, SET, 'p',
                   GET, 'p', INT, 0, OUTPUT, PINMODE,
                   LOOP,

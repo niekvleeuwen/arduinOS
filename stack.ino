@@ -1,5 +1,5 @@
 #define STACKSIZE 32
-byte stack[1][STACKSIZE];
+byte stack[PROCESS_TABLE_SIZE][STACKSIZE];
 
 void pushByte(int processIndex, byte b) {
   stack[processIndex][ProcessTable[processIndex].sp++] = b;
@@ -9,8 +9,9 @@ byte popByte(int processIndex) {
   return stack[processIndex][--ProcessTable[processIndex].sp];
 }
 
-void printStack(int processIndex){
- Serial.println("\nStack:\n==========");
+// this function prints the stack of a given process
+void printS(int processIndex){
+ Serial.println("Stack:\n==========");
  for(int i = 0; i < ProcessTable[processIndex].sp; i++){
    Serial.print(i);
    Serial.print(" - ");
