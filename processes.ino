@@ -123,7 +123,7 @@ void listProcesses() {
 void runProcesses() {
   for (int i = 0; i < noOfProcesses; i++) {
     if (ProcessTable[i].state == 'r') {
-      Serial.print("Process: ");
+      Serial.print("\nProcess: ");
       Serial.println(ProcessTable[i].pid);
       execute(i);
     }
@@ -139,51 +139,67 @@ void execute(int i) {
   Serial.println(ProcessTable[i].pc);
   byte currentCommand = EEPROM.read(address + ProcessTable[i].pc);
   ProcessTable[i].pc++;
+  if (ProcessTable[i].pc > 37) {
+    currentCommand = STOP;
+  }
   Serial.print("CMD: ");
   Serial.println(currentCommand);
   switch (currentCommand) {
-    case PRINT:
-      printStack(ProcessTable[i].pid, address);
-      break;
-    case STOP:
-      Serial.print("\nProcess with pid: ");
-      Serial.print(ProcessTable[i].pid);
-      Serial.println(" is finished.");
-      killProcess(ProcessTable[i].pid);
-      break;
-    case STRING:
-      Serial.print("STRING: ");
-      char string[12];
-      int pointer = 0;
-      do {
-        string[pointer] = (char)EEPROM.read(address + ProcessTable[i].pc++);
-        pointer++;
-      } while (string[pointer - 1] != 0);
-      pushString(ProcessTable[i].pid, string);
-      break;
-    case CHAR:
-      Serial.println("CHAR");
-      break;
-    case INT:
-      Serial.println("INT");
-      int first = EEPROM.read(address + ProcessTable[i].pc++);
-      int second = EEPROM.read(address + ProcessTable[i].pc++);
-      int result = (first * 256) + second;
-      pushInt(ProcessTable[i].pid, result);
-      break;
-    case FLOAT:
-      Serial.println("FLOAT");
-      break;
-    case SET:
-      char vName = (char)EEPROM.read(address + ProcessTable[i].pc++);
-      break;
-    case GET:
-      break;
+    case PRINT: {
+        printStack(ProcessTable[i].pid, address);
+        break;
+      }
+    case STOP: {
+        Serial.print("\nProcess with pid: ");
+        Serial.print(ProcessTable[i].pid);
+        Serial.println(" is finished.");
+        killProcess(ProcessTable[i].pid);
+        break;
+      }
+    case STRING: {
+
+        char string[12];
+        int pointer = 0;
+        do {
+          string[pointer] = (char)EEPROM.read(address + ProcessTable[i].pc++);
+          pointer++;
+        } while (string[pointer - 1] != 0);
+        pushString(ProcessTable[i].pid, string);
+        break;
+      }
+    case CHAR: {
+ 
+        break;
+      }
+    case INT: {
+
+        int first = EEPROM.read(address + ProcessTable[i].pc++);
+        int second = EEPROM.read(address + ProcessTable[i].pc++);
+        int result = (first * 256) + second;
+        pushInt(ProcessTable[i].pid, result);
+        Serial.println(result);
+        break;
+      }
+    case FLOAT: {
+
+        break;
+      }
+    case SET: {
+        char nameSet = (char)EEPROM.read(address + ProcessTable[i].pc++);
+        Serial.println(nameSet);
+        allocate(nameSet, ProcessTable[i].pid);
+        break;
+      }
+    case GET: {
+        char nameGet = (char)EEPROM.read(address + ProcessTable[i].pc++);
+        Serial.println(nameGet);
+        retrieve(nameGet, ProcessTable[i].pid);
+        break;
+      }
   }
 }
 
 void printStack(int pid, int address) {
-  Serial.println("PRINT");
   // check how many bytes we need to pop
   byte type = popByte(pid);
   switch (type) {

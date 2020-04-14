@@ -2,7 +2,7 @@
   Author: Niek van Leeuwen
   Date: 15-03-2020
 */
-const int MEMORY_SIZE = 256;
+const int MEMORY_SIZE = 128;
 const int MEMORY_TABLE_SIZE = 10;
 int noOfVars = 0;
 
@@ -53,7 +53,7 @@ void allocate(byte name, int pid) {
   }
 
   // check if value exists in the memory table
-  if (valueExists(name, pid) == -1) {
+  if (valueExists(name, pid) != -1) {
     // delete value
     free(name, pid);
   }
