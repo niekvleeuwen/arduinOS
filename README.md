@@ -1,6 +1,11 @@
 # arduinOS
 Use simulated multithreading to run multiple programs written in byte code at the same time. 
 
+### Overview
+During the course operating systems 2 I built my own operating system for an Arduino Uno: ArduinOS. The Arduino can be programmed via an IDE in C, but can only run one program at a time. To start another program it has to be flashed again. Also the microcontroller does not have a file system.
+
+I have built an "operating system" that can run multiple programs at the same time (multitasking), and has a file system in which files can be stored even if the power supply fails. The OS runs programs consisting of byte code.
+
 ### Core features
 * CLI
 * Filesystem
